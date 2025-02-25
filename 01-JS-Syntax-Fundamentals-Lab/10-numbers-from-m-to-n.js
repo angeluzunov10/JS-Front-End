@@ -3,5 +3,3 @@ function printNums(m, n) {
         console.log(i)
     }
 }
-
-printNums(10, 1)
