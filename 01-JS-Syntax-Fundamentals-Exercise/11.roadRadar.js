@@ -1,17 +1,14 @@
 function roadRadar(speed, area){
-    let limit = 0;
-    let status;
-    let speedDifference = 0
-    
-    if (area == 'motorway') {
-        limit = 130;
-    } else if (area == 'interstate') {
-        limit = 90;
-    } else if (area == 'city') {
-        limit = 50;
-    } else if (area == 'residential') {
-        limit = 20;
+    let areas = {
+        'motorway': 130,
+        'interstate': 90,
+        'city': 50,
+        'residential': 20
     }
+
+    let limit = areas[area];
+    let speedDifference = speed - limit;
+    
 
     if (limit < speed) {
         speedDifference = speed - limit;
