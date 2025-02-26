@@ -1,4 +1,6 @@
 function roadRadar(speed, area){
+    let status;
+
     let areas = {
         'motorway': 130,
         'interstate': 90,
@@ -7,7 +9,7 @@ function roadRadar(speed, area){
     }
 
     let limit = areas[area];
-    let speedDifference = speed - limit;
+    let speedDifference;
     
 
     if (limit < speed) {
