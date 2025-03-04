@@ -1,5 +1,5 @@
 function findSubstring(string, startIndex, count) {
-    let newString = string.substring(startIndex, count + 1)
+    let newString = string.substring(startIndex, startIndex + count)
 
     console.log(newString)
 }
