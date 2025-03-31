@@ -24,7 +24,7 @@ function solve() {
 
       let price = Number(productRow.querySelector('.product-line-price').textContent);
 
-      output.value += `Added ${name} for ${price.toFixed(2)} to the cart.\n`
+      output.value += `Added ${name} for ${price.toFixed(2)} to the cart.\n`;
 
       if (!cart.hasOwnProperty(name)){
          cart[name] = 0;
@@ -36,14 +36,17 @@ function solve() {
    function onCheckout(event){
       let sum = 0;
 
-      for (price of Object.values(cart)){
+      for (let price of Object.values(cart)){
          sum += price;
       }
 
-      let result = `You boucght ${Object.keys(cart).join(', ')} for ${sum.toFixed(2)}.`
+      let result = `You bought ${Object.keys(cart).join(', ')} for ${sum.toFixed(2)}.`
 
       output.value += result;
       checkoutBtn.removeEventListener('click', onCheckout);
 
+      for (let btn of buyBtns){
+         btn.removeEventListener('click', onBuyClick);
+      }
    }
 }
