@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Async Demo</title>
+</head>
+<body>
+
+    <button onclick="getData()">Click to get data!</button>
+
+    <script>
+        function getData(){
+            fetch('https://swapi.dev/api/people')
+                .then((data) => console.log(data));
+        }
+    </script>
+    
+</body>
+</html>
