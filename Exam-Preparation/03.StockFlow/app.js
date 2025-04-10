@@ -1,174 +1,164 @@
-// Select elements from the DOM
-const orderBtn = document.getElementById('order-btn');
-const editBtn = document.getElementById('edit-order');
-const loadBtn = document.getElementById('load-orders');
-const nameInput = document.getElementById('name');
-const quantityInput = document.getElementById('quantity');
-const dateInput = document.getElementById('date');
-const listContainer = document.getElementById('list');
+let host = 'http://localhost:3030/jsonstore/orders/';
 
-// Global variable to track the current order ID for editing
-let currentOrderId = null;
+let orderBtn = document.getElementById('order-btn');
+let editBtn = document.getElementById('edit-order');
 
-// Helper function to create HTML structure for an order
-function createOrderElement(order) {
-    const container = document.createElement('div');
-    container.classList.add('container');
-    
-    const name = document.createElement('h2');
-    name.textContent = order.name;
-    
-    const date = document.createElement('h3');
-    date.textContent = order.date;
-    
-    const quantity = document.createElement('h3');
-    quantity.textContent = order.quantity;
+// Attach event listeners
+document.getElementById('load-orders').addEventListener('click', showOrders);
+orderBtn.addEventListener('click', onAdd);
+editBtn.addEventListener('click', onEdit);
 
-    const changeBtn = document.createElement('button');
-    changeBtn.textContent = 'Change';
-    changeBtn.classList.add('change-btn');
-    changeBtn.addEventListener('click', () => loadOrderForEdit(order));
+// Function to create a list item for each order
+async function showOrders() {
+    let data = await getAllOrders();
 
-    const doneBtn = document.createElement('button');
-    doneBtn.textContent = 'Done';
-    doneBtn.classList.add('done-btn');
-    doneBtn.addEventListener('click', () => deleteOrder(order._id));
+    let list = document.getElementById('list');
+    list.replaceChildren();
 
-    container.appendChild(name);
-    container.appendChild(date);
-    container.appendChild(quantity);
-    container.appendChild(changeBtn);
-    container.appendChild(doneBtn);
+    for (let record of data) {
+        let changeBtn = create('button', ['Change']);
+        changeBtn.className = 'change-btn';
+        changeBtn.addEventListener('click', () => onRecordEdit(record, element));
 
-    return container;
-}
-
-// Load orders from the server
-async function loadOrders() {
-    try {
-        const response = await fetch('http://localhost:3030/jsonstore/orders/');
-        const data = await response.json();
-        
-        // Clear the existing list
-        listContainer.innerHTML = '';
-        
-        // Create an HTML element for each order
-        Object.values(data).forEach(order => {
-            const orderElement = createOrderElement(order);
-            listContainer.appendChild(orderElement);
+        let deleteBtn = create('button', ['Done']);
+        deleteBtn.className = 'done-btn';
+        deleteBtn.addEventListener('click', async () => {
+            await deleteOrder(record._id);
+            showOrders();
         });
 
-        // Disable the Edit button if there's no selected order
-        editBtn.disabled = true;
-    } catch (error) {
-        console.error('Error loading orders:', error);
-    }
-}
+        let controlDiv = create('div', [changeBtn, deleteBtn], 'buttons-container');
 
-// Create a new order and send it to the server
-async function createOrder() {
-    const name = nameInput.value.trim();
-    const quantity = quantityInput.value.trim();
-    const date = dateInput.value.trim();
-
-    if (name && quantity && date) {
-        const newOrder = { name, quantity, date };
+        let element = create('div', [
+            create('h2', [record.name]),
+            create('h3', [record.date]),
+            create('h3', [record.quantity]),
+            controlDiv
+        ]);
         
-        try {
-            // Send the POST request to create a new order
-            await fetch('http://localhost:3030/jsonstore/orders/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newOrder)
-            });
-
-            // Clear input fields
-            nameInput.value = '';
-            quantityInput.value = '';
-            dateInput.value = '';
-
-            // Reload all orders
-            loadOrders();
-        } catch (error) {
-            console.error('Error creating order:', error);
-        }
+        element.className = 'container';
+        list.appendChild(element);
     }
 }
 
-// Load an order's details into the form for editing
-function loadOrderForEdit(order) {
-    currentOrderId = order._id;
-    nameInput.value = order.name;
-    quantityInput.value = order.quantity;
-    dateInput.value = order.date;
+// Function for editing an order
+function onRecordEdit(record, element) {
+    element.remove();
 
-    // Enable the Edit button and disable the Create Order button
+    document.getElementById('name').value = record.name;
+    document.getElementById('quantity').value = record.quantity;
+    document.getElementById('date').value = record.date;
+
+    editBtn.dataset.id = record._id;
     orderBtn.disabled = true;
     editBtn.disabled = false;
 }
 
-// Edit an existing order
-async function editOrder() {
-    const name = nameInput.value.trim();
-    const quantity = quantityInput.value.trim();
-    const date = dateInput.value.trim();
+// Function for adding a new order
+async function onAdd() {
+    let nameInput = document.getElementById('name');
+    let quantityInput = document.getElementById('quantity');
+    let dateInput = document.getElementById('date');
 
-    if (name && quantity && date && currentOrderId) {
-        const updatedOrder = { name, quantity, date };
+    if (!nameInput.value || !quantityInput.value || !dateInput.value) {
+        return;
+    }
 
-        try {
-            // Send the PUT request to update the order
-            await fetch(`http://localhost:3030/jsonstore/orders/${currentOrderId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedOrder)
-            });
+    await addOrder(nameInput.value, quantityInput.value, dateInput.value);
 
-            // Clear input fields and reset buttons
-            nameInput.value = '';
-            quantityInput.value = '';
-            dateInput.value = '';
-            orderBtn.disabled = false;
-            editBtn.disabled = true;
+    nameInput.value = '';
+    quantityInput.value = '';
+    dateInput.value = '';
 
-            // Reload all orders
-            loadOrders();
-        } catch (error) {
-            console.error('Error editing order:', error);
+    showOrders();
+}
+
+// Function for editing an existing order
+async function onEdit() {
+    let nameInput = document.getElementById('name');
+    let quantityInput = document.getElementById('quantity');
+    let dateInput = document.getElementById('date');
+    let id = editBtn.dataset.id;
+
+    if (!nameInput.value || !quantityInput.value || !dateInput.value) {
+        return;
+    }
+
+    await updateOrder(id, nameInput.value, quantityInput.value, dateInput.value);
+
+    nameInput.value = '';
+    quantityInput.value = '';
+    dateInput.value = '';
+
+    orderBtn.disabled = false;
+    editBtn.disabled = true;
+    editBtn.dataset.id = '';
+
+    showOrders();
+}
+
+// Function to fetch all orders from the server
+async function getAllOrders() {
+    let res = await fetch(host);
+    if (res.status == 204) {
+        return [];
+    }
+
+    let data = await res.json();
+    return Object.values(data);
+}
+
+// Function to add a new order to the server
+async function addOrder(name, quantity, date) {
+    let record = { name, quantity, date };
+
+    let options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record),
+    };
+
+    await fetch(host, options);
+}
+
+// Function to delete an order from the server
+async function deleteOrder(id) {
+    let options = {
+        method: 'DELETE',
+    };
+
+    await fetch(`${host}${id}`, options);
+}
+
+// Function to update an order on the server
+async function updateOrder(_id, name, quantity, date) {
+    let record = { _id, name, quantity, date };
+
+    let options = {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record),
+    };
+
+    await fetch(`${host}${_id}`, options);
+}
+
+// Utility function to create an element
+function create(tagName, content, id) {
+    let element = document.createElement(tagName);
+
+    if (id) {
+        element.id = id;
+    }
+
+    for (let child of content) {
+        if (typeof child === 'object') {
+            element.appendChild(child);
+        } else {
+            let node = document.createTextNode(child);
+            element.appendChild(node);
         }
     }
+
+    return element;
 }
-
-// Delete an order from the server
-async function deleteOrder(orderId) {
-    try {
-        // Send the DELETE request to remove the order
-        await fetch(`http://localhost:3030/jsonstore/orders/${orderId}`, {
-            method: 'DELETE',
-        });
-
-        // Reload all orders after deletion
-        loadOrders();
-    } catch (error) {
-        console.error('Error deleting order:', error);
-    }
-}
-
-// Event listeners for buttons
-orderBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    createOrder();
-});
-
-editBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    editOrder();
-});
-
-loadBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    loadOrders();
-});
-
-// Initially load orders when the page is ready
-window.addEventListener('load', loadOrders);

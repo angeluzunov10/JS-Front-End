@@ -1,133 +1,104 @@
 window.addEventListener("load", solve);
 
 function solve() {
-    let saveButton = document.getElementById('save');
-    let eventInput = document.getElementById('event');
-    let noteInput = document.getElementById('note');
-    let dateInput = document.getElementById('date');
-    let upcomingList = document.getElementById('upcoming-list');
-    let eventsList = document.getElementById('events-list');
-    
-    let currentEvent = null;
+    document.getElementById('save').addEventListener('click', onSave);          // 1. Хващам си бутоните
+    document.querySelector('.delete').addEventListener('click', onDelete);
 
-    // Helper function to create a list item for an event
-    function createEventElement(eventData) {
-        let li = document.createElement('li');
-        li.classList.add('event-item');
+    // 2. Създавам си функциите
+
+    function onSave(ev){                        
+        ev.preventDefault();        // защото има form
+
+        let event = document.getElementById('event').value;     // 3. Взимам си стойностите, попълнени в полетата 
+        let note = document.getElementById('note').value;
+        let date = document.getElementById('date').value;
+
+        if (!event || !note || !date){
+            return;
+        };
+
+        // 5. Създаваме бутоните, за да ги добавим в HTML-а и да им добавим eventListener
+
+        let editBtn = create('button', ['Edit'], 'btn edit');
+        let doneBtn = create('button', ['Done'], 'btn done');
+
+        // 8. Добавяме eventListener-ите
+        editBtn.addEventListener('click', () => onEdit(event, note, date, element));
+        doneBtn.addEventListener('click', () => onDone(element));
+
+        // 4. Създаваме си елементитите в секцията за задържане
+        //    като първо си създаваме create функцията
+
+        let element = create('li', [
+            create('div', [
+                create('article', [
+                    create('p', [`Name: ${event}`]),
+                    create('p', [`Note: ${note}`]),
+                    create('p', [`Date: ${date}`])
+                ]),
+                create('div', [
+                    editBtn,        // 6. Вкарваме бутоните в div-a
+                    doneBtn
+                ], 'buttons')
+            ], 'event-container')
+        ], 'event-item');
+
+        // 7. Вкарваме елемента към съответния елемент в DOM-a
+
+        let list = document.getElementById('upcoming-list');
+        list.appendChild(element);
+
+        document.querySelector('form').reset();
         
-        let container = document.createElement('div');
-        container.classList.add('event-container');
-        
-        let article = document.createElement('article');
-        let eventName = document.createElement('p');
-        eventName.textContent = `Name: ${eventData.name}`;
-        
-        let eventNote = document.createElement('p');
-        eventNote.textContent = `Note: ${eventData.note}`;
-        
-        let eventDate = document.createElement('p');
-        eventDate.textContent = `Date: ${eventData.date}`;
-        
-        article.appendChild(eventName);
-        article.appendChild(eventNote);
-        article.appendChild(eventDate);
-        
-        let buttons = document.createElement('div');
-        buttons.classList.add('buttons');
-        
-        let editButton = document.createElement('button');
-        editButton.classList.add('btn', 'edit');
-        editButton.textContent = 'Edit';
-        editButton.addEventListener('click', () => editEvent(eventData, li));
-        
-        let doneButton = document.createElement('button');
-        doneButton.classList.add('btn', 'done');
-        doneButton.textContent = 'Done';
-        doneButton.addEventListener('click', () => endEvent(eventData, li));
-        
-        buttons.appendChild(editButton);
-        buttons.appendChild(doneButton);
-        
-        container.appendChild(article);
-        container.appendChild(buttons);
-        
-        li.appendChild(container);
-        
-        return li;
     }
 
-    // Save event
-    saveButton.addEventListener('click', function () {
-        let name = eventInput.value.trim();
-        let note = noteInput.value.trim();
-        let date = dateInput.value.trim();
-        
-        if (name && note && date) {
-            let eventData = { name, note, date };
-            
-            let eventElement = createEventElement(eventData);
-            upcomingList.appendChild(eventElement);
-            
-            // Clear input fields after adding
-            eventInput.value = '';
-            noteInput.value = '';
-            dateInput.value = '';
-        }
-    });
 
-    // Edit event
-    function editEvent(eventData, li) {
-        eventInput.value = eventData.name;
-        noteInput.value = eventData.note;
-        dateInput.value = eventData.date;
-        
-        // Remove event from upcoming list
-        upcomingList.removeChild(li);
-        
-        // Store current event for later update
-        currentEvent = eventData;
+    // 9. Правим onEdit функцията
+
+    function onEdit(event, note, date, element){
+        document.getElementById('event').value = event;  
+        document.getElementById('note').value = note;
+        document.getElementById('date').value = date;
+
+        element.remove();
     }
 
-    // End event (move to ended list)
-    function endEvent(eventData, li) {
-        eventsList.appendChild(li);
-        
-        // Remove buttons
-        let buttons = li.querySelector('.buttons');
-        buttons.remove();
+    // 10. Правим onDone функцията
+
+    function onDone(element){
+        let article = element.querySelector('article');
+        element.replaceChildren();
+        element.appendChild(article);
+
+        // прехвърляме го в списъка с готовите event-и
+        let list = document.getElementById('events-list');
+        list.appendChild(element)
     }
 
-    // Delete all ended events
-    let deleteButton = document.querySelector('.btn.delete');
-    deleteButton.addEventListener('click', function () {
-        eventsList.innerHTML = '';
-    });
+    // 11. Правим onDelete функцията
 
-    // Handle edit after modifying event
-    saveButton.addEventListener('click', function () {
-        if (currentEvent) {
-            let updatedEvent = {
-                name: eventInput.value.trim(),
-                note: noteInput.value.trim(),
-                date: dateInput.value.trim(),
-            };
-            
-            if (updatedEvent.name && updatedEvent.note && updatedEvent.date) {
-                // Update event data
-                currentEvent.name = updatedEvent.name;
-                currentEvent.note = updatedEvent.note;
-                currentEvent.date = updatedEvent.date;
-                
-                // Create and add updated event to upcoming list
-                let updatedEventElement = createEventElement(currentEvent);
-                upcomingList.appendChild(updatedEventElement);
-                
-                // Clear inputs and reset currentEvent
-                eventInput.value = '';
-                noteInput.value = '';
-                dateInput.value = '';
-                currentEvent = null;
+    function onDelete(){
+        document.getElementById('events-list').replaceChildren();
+    }
+
+
+    // 3. Създаваме си функция за създаването на елементите
+
+    function create(tagName, content = [], className){
+        let element = document.createElement(tagName);
+
+        for (let item of content) {
+            if (typeof item != 'object'){
+                item = document.createTextNode(item);
             }
+            element.appendChild(item);
         }
-    });
+
+        if (className){
+            element.className = className;
+        }
+
+        return element;
+
+    }
 }
